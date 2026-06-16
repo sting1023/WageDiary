@@ -5,7 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
@@ -56,7 +56,7 @@ fun CalendarSection(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = onPrevMonth, modifier = Modifier.size(36.dp)) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = "上月", modifier = Modifier.size(24.dp))
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "上月", modifier = Modifier.size(24.dp))
                 }
                 Text(
                     text = "${yearMonth.year} 年 ${yearMonth.monthValue} 月",
