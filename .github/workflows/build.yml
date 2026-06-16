@@ -28,11 +28,16 @@ jobs:
       - name: Setup fixed debug keystore
         run: |
           mkdir -p ~/.android
+          # 解到 ~/.android/(AGP 默认路径)
           base64 -d .github/keystore.b64 > ~/.android/debug.keystore
           chmod 600 ~/.android/debug.keystore
-          echo "✓ Fixed keystore installed"
+          # 也解到 app/(build.gradle.kts 里显式配了 signingConfig 走这条)
+          mkdir -p app
+          base64 -d .github/keystore.b64 > app/debug.keystore
+          chmod 600 app/debug.keystore
+          echo "✓ Fixed keystore installed (both ~/.android/ and app/)"
           EXPECTED_SHA1="57:FE:A8:FC:8B:FA:38:98:9A:D7:8C:77:4C:C6:D8:CD:64:F5:C9:70"
-          ACTUAL_SHA1=$(keytool -list -v -keystore ~/.android/debug.keystore -storepass android 2>/dev/null | grep 'SHA1:' | head -1 | awk '{print $2}')
+          ACTUAL_SHA1=$(keytool -list -v -keystore app/debug.keystore -storepass android 2>/dev/null | grep 'SHA1:' | head -1 | awk '{print $2}')
           echo "Expected SHA-1: $EXPECTED_SHA1"
           echo "Actual SHA-1:   $ACTUAL_SHA1"
           if [ "$ACTUAL_SHA1" != "$EXPECTED_SHA1" ]; then
