@@ -1,0 +1,68 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.5'
+
+      # 关键:用固定 keystore 替换默认 debug.keystore
+      # 不然每次 build 签名不同,Android 升级会拒(-7 错误)
+      - name: Setup fixed debug keystore
+        run: |
+          mkdir -p ~/.android
+          base64 -d .github/keystore.b64 > ~/.android/debug.keystore
+          chmod 600 ~/.android/debug.keystore
+          echo "✓ Fixed keystore installed"
+          EXPECTED_SHA1="57:FE:A8:FC:8B:FA:38:98:9A:D7:8C:77:4C:C6:D8:CD:64:F5:C9:70"
+          ACTUAL_SHA1=$(keytool -list -v -keystore ~/.android/debug.keystore -storepass android 2>/dev/null | grep 'SHA1:' | head -1 | awk '{print $2}')
+          echo "Expected SHA-1: $EXPECTED_SHA1"
+          echo "Actual SHA-1:   $ACTUAL_SHA1"
+          if [ "$ACTUAL_SHA1" != "$EXPECTED_SHA1" ]; then
+            echo "✗ Keystore SHA-1 mismatch! Build aborted to prevent signature drift."
+            exit 1
+          fi
+          echo "✓ SHA-1 verified"
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew || true
+
+      - name: Build debug APK
+        run: gradle assembleDebug --no-daemon --stacktrace
+
+      - name: Locate APK
+        id: locate
+        run: |
+          APK=$(find app/build/outputs/apk/debug -name "*.apk" | head -1)
+          echo "apk_path=$APK" >> $GITHUB_OUTPUT
+          echo "✓ APK at: $APK"
+
+      - name: Verify signing
+        run: |
+          APK="${{ steps.locate.outputs.apk_path }}"
+          echo "APK: $APK"
+          # 提取 keystore SHA-1(已验证过),再次确认
+          keytool -list -v -keystore ~/.android/debug.keystore -storepass android 2>/dev/null | grep 'SHA1:' | head -1
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug
+          path: ${{ steps.locate.outputs.apk_path }}

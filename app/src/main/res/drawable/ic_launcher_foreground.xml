@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- 时钟 + 工资符号:中心一个白色时钟,里面有 ¥ 符号 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,32 A22,22 0 1 0 54,76 A22,22 0 1 0 54,32 Z M54,36 A18,18 0 1 1 54,72 A18,18 0 1 1 54,36 Z" />
+    <!-- 时钟指针 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M53,42 L55,42 L55,55 L65,55 L65,57 L53,57 Z" />
+    <!-- ¥ 符号 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M50,62 L58,62 L58,64 L52,64 L52,66 L58,66 L58,68 L52,68 L52,70 L50,70 L50,68 L48,68 L48,66 L50,66 L50,64 L48,64 L48,62 L50,62 Z M52,62 L52,64 L56,64 L56,62 Z" />
+</vector>
