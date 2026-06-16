@@ -77,7 +77,7 @@ fun CalendarSection(
                         Toast.makeText(context, "切月失败:${e.javaClass.simpleName}:${e.message}", Toast.LENGTH_LONG).show()
                     }
                 }, modifier = Modifier.size(36.dp)) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "下月", modifier = Modifier.size(24.dp))
+                    Icon(Icons.Default.ArrowForward, contentDescription = "下月", modifier = Modifier.size(24.dp))
                 }
             }
 

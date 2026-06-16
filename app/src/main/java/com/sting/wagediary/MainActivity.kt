@@ -6,6 +6,12 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -50,16 +56,14 @@ class MainActivity : ComponentActivity() {
             WageTheme {
                 var crashShown by remember { mutableStateOf(initialCrash) }
                 if (crashShown != null) {
-                    androidx.compose.material3.AlertDialog(
+                    AlertDialog(
                         onDismissRequest = { crashShown = null },
-                        title = { androidx.compose.material3.Text("⚠️ 上次崩溃记录") },
+                        title = { Text("⚠️ 上次崩溃记录") },
                         text = {
-                            androidx.compose.foundation.layout.Column(
-                                modifier = androidx.compose.ui.Modifier.verticalScroll(
-                                    androidx.compose.foundation.rememberScrollState()
-                                )
+                            Column(
+                                modifier = androidx.compose.ui.Modifier.verticalScroll(rememberScrollState())
                             ) {
-                                androidx.compose.material3.Text(
+                                Text(
                                     crashShown!!,
                                     fontSize = 11.sp,
                                     fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
@@ -67,8 +71,8 @@ class MainActivity : ComponentActivity() {
                             }
                         },
                         confirmButton = {
-                            androidx.compose.material3.TextButton(onClick = { crashShown = null }) {
-                                androidx.compose.material3.Text("确定(关闭)")
+                            TextButton(onClick = { crashShown = null }) {
+                                Text("确定(关闭)")
                             }
                         }
                     )
