@@ -137,56 +137,77 @@ fun DayEntryEditor(
             Divider()
             Spacer(Modifier.height(8.dp))
 
-            // 4. 额外加班
-            NumberField(
-                label = "额外加班(¥,可选)",
-                value = draft.extraText,
-                onValueChange = {
-                    onDraftChange(draft.copy(extraText = it))
-                    onMarkDirty(entryDate)
-                },
-                onClickIfHistory = if (extraHistory.isNotEmpty()) {
-                    { historySheet = HistoryField.ExtraOvertime }
-                } else null
-            )
+            // 4. 额外加班 — 点输入框弹历史(有历史时,默认只读)
             if (extraHistory.isNotEmpty()) {
-                Text(
-                    "点击输入框可快速选择最近 3 条金额",
-                    fontSize = 10.sp,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                    modifier = Modifier.padding(start = 4.dp, top = 2.dp, bottom = 8.dp)
+                // 有历史 → 显示 "上次输入: ¥xxx" + 可点编辑按钮切换输入模式
+                HistoryInputRow(
+                    label = "额外加班(¥,可选)",
+                    history = extraHistory,
+                    currentValue = draft.extraText,
+                    onPickFromHistory = { picked ->
+                        onDraftChange(draft.copy(extraText = picked))
+                        onMarkDirty(entryDate)
+                    },
+                    onStartEdit = {
+                        // 切到普通输入:用当前值覆盖(让用户继续编辑)
+                    }
+                )
+                // 也允许手动输入(用 OutlinedTextField)
+                NumberField(
+                    label = "或手动输入额外加班",
+                    value = draft.extraText,
+                    onValueChange = {
+                        onDraftChange(draft.copy(extraText = it))
+                        onMarkDirty(entryDate)
+                    }
+                )
+            } else {
+                // 没历史 → 普通输入
+                NumberField(
+                    label = "额外加班(¥,可选)",
+                    value = draft.extraText,
+                    onValueChange = {
+                        onDraftChange(draft.copy(extraText = it))
+                        onMarkDirty(entryDate)
+                    }
                 )
             }
             Spacer(Modifier.height(4.dp))
 
-            // 5. 备注
-            OutlinedTextField(
-                value = draft.noteText,
-                onValueChange = {
-                    onDraftChange(draft.copy(noteText = it))
-                    onMarkDirty(entryDate)
-                },
-                label = { Text("备注(对当天工资的说明)") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .then(
-                        if (noteHistory.isNotEmpty()) {
-                            Modifier.clickable { historySheet = HistoryField.DayNote }
-                        } else Modifier
-                    ),
-                singleLine = true,
-                trailingIcon = if (noteHistory.isNotEmpty()) {
-                    {
-                        IconButton(onClick = { historySheet = HistoryField.DayNote }) {
-                            Icon(
-                                Icons.Default.History,
-                                contentDescription = "点输入框或这里选历史",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
-                } else null
-            )
+            // 5. 备注 — 同样处理
+            if (noteHistory.isNotEmpty()) {
+                HistoryInputRow(
+                    label = "备注(对当天工资的说明)",
+                    history = noteHistory,
+                    currentValue = draft.noteText,
+                    onPickFromHistory = { picked ->
+                        onDraftChange(draft.copy(noteText = picked))
+                        onMarkDirty(entryDate)
+                    },
+                    onStartEdit = {}
+                )
+                OutlinedTextField(
+                    value = draft.noteText,
+                    onValueChange = {
+                        onDraftChange(draft.copy(noteText = it))
+                        onMarkDirty(entryDate)
+                    },
+                    label = { Text("或手动输入备注") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+            } else {
+                OutlinedTextField(
+                    value = draft.noteText,
+                    onValueChange = {
+                        onDraftChange(draft.copy(noteText = it))
+                        onMarkDirty(entryDate)
+                    },
+                    label = { Text("备注(对当天工资的说明)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+            }
 
             Spacer(Modifier.height(12.dp))
 
@@ -307,6 +328,93 @@ fun DayEntryEditor(
 }
 
 private enum class HistoryField { ExtraOvertime, DayNote }
+
+/**
+ * 显示当前值 + 历史下拉选择按钮
+ * - 显示:当前值(label + value)
+ * - "选择历史 ▼" 按钮:点开 ModalBottomSheet 列最近 3 条
+ * - 选完自动关闭 + 调 onPickFromHistory
+ * - 用户可直接编辑下方的"或手动输入"输入框
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun HistoryInputRow(
+    label: String,
+    history: List<String>,
+    currentValue: String,
+    onPickFromHistory: (String) -> Unit,
+    onStartEdit: () -> Unit
+) {
+    var showSheet by remember { mutableStateOf(false) }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                label,
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+            )
+            Text(
+                text = if (currentValue.isNotEmpty()) currentValue else "(空)",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium,
+                color = if (currentValue.isNotEmpty()) {
+                    MaterialTheme.colorScheme.onSurface
+                } else {
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                }
+            )
+        }
+        OutlinedButton(
+            onClick = { showSheet = true }
+        ) {
+            Icon(
+                Icons.Default.History,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(Modifier.width(4.dp))
+            Text("选历史", fontSize = 13.sp)
+        }
+    }
+
+    if (showSheet) {
+        ModalBottomSheet(onDismissRequest = { showSheet = false }) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    "从最近 3 条历史选(点空白处取消)",
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
+                Spacer(Modifier.height(8.dp))
+                history.forEach { value ->
+                    ListItem(
+                        headlineContent = {
+                            Text(
+                                if (currentValue.toDoubleOrNull() != null) "¥ $value" else value,
+                                fontSize = 15.sp
+                            )
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                onPickFromHistory(value)
+                                showSheet = false
+                            }
+                    )
+                    Divider()
+                }
+                Spacer(Modifier.height(16.dp))
+            }
+        }
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

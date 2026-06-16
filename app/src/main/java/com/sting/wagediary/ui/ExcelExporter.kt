@@ -34,7 +34,9 @@ object ExcelExporter {
             val sheet = workbook.createSheet("${yearMonth.year}年${yearMonth.monthValue}月")
             writeCalendarBlock(sheet, yearMonth, entries, settings)
             writeDetailsBlock(sheet, yearMonth, entries, settings)
-            autoSizeColumns(sheet, 12)
+            // Android 没有 java.awt,autoSizeColumn 会 NoClassDefFoundError
+            // 改手动列宽
+            setManualColumnWidths(sheet, 12)
         } catch (e: Exception) {
             workbook.close()
             return "导出失败:${e.message}"
@@ -166,10 +168,26 @@ object ExcelExporter {
         }
     }
 
-    private fun autoSizeColumns(sheet: Sheet, numCols: Int) {
+    private fun setManualColumnWidths(sheet: Sheet, numCols: Int) {
+        // 手动列宽(250 * 字号,中文字符按 350 算)
+        // Android 无 java.awt,不能用 autoSizeColumn
+        val widths = intArrayOf(
+            3500,  // 0: 日期
+            1500,  // 1: 星期
+            2000,  // 2: 启用日薪
+            2000,  // 3: 日薪
+            2000,  // 4: 时薪
+            2000,  // 5: 倍数
+            2000,  // 6: 加班小时
+            2500,  // 7: 加班费
+            2500,  // 8: 额外加班
+            4000,  // 9: 备注
+            3000,  // 10: 当天合计
+            2500   // 11: 备用
+        )
         for (i in 0 until numCols) {
             try {
-                sheet.autoSizeColumn(i)
+                sheet.setColumnWidth(i, if (i < widths.size) widths[i] else 2500)
             } catch (e: Exception) {
                 // 忽略
             }
