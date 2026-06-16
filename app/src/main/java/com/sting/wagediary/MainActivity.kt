@@ -1,5 +1,8 @@
 package com.sting.wagediary
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
@@ -7,9 +10,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -56,6 +63,7 @@ class MainActivity : ComponentActivity() {
             WageTheme {
                 var crashShown by remember { mutableStateOf(initialCrash) }
                 if (crashShown != null) {
+                    val ctx = this@MainActivity
                     AlertDialog(
                         onDismissRequest = { crashShown = null },
                         title = { Text("⚠️ 上次崩溃记录") },
@@ -71,8 +79,18 @@ class MainActivity : ComponentActivity() {
                             }
                         },
                         confirmButton = {
+                            TextButton(onClick = {
+                                val cm = ctx.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                cm.setPrimaryClip(ClipData.newPlainText("crash log", crashShown))
+                                Toast.makeText(ctx, "已复制到剪贴板,可粘贴到微信发我", Toast.LENGTH_LONG).show()
+                                crashShown = null
+                            }) {
+                                Text("📋 复制到剪贴板")
+                            }
+                        },
+                        dismissButton = {
                             TextButton(onClick = { crashShown = null }) {
-                                Text("确定(关闭)")
+                                Text("关闭")
                             }
                         }
                     )
