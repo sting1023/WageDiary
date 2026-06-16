@@ -1,5 +1,6 @@
 package com.sting.wagediary.ui
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -18,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -44,6 +46,7 @@ fun CalendarSection(
     onNextMonth: () -> Unit,
     onSelectDate: (LocalDate) -> Unit
 ) {
+    val context = LocalContext.current
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp)
@@ -55,7 +58,12 @@ fun CalendarSection(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = onPrevMonth, modifier = Modifier.size(36.dp)) {
+                IconButton(onClick = {
+                    try { onPrevMonth() }
+                    catch (e: Throwable) {
+                        Toast.makeText(context, "切月失败:${e.javaClass.simpleName}:${e.message}", Toast.LENGTH_LONG).show()
+                    }
+                }, modifier = Modifier.size(36.dp)) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "上月", modifier = Modifier.size(24.dp))
                 }
                 Text(
@@ -63,8 +71,13 @@ fun CalendarSection(
                     fontSize = 19.sp,
                     fontWeight = FontWeight.Medium
                 )
-                IconButton(onClick = onNextMonth, modifier = Modifier.size(36.dp)) {
-                    Icon(Icons.Default.ArrowForward, contentDescription = "下月", modifier = Modifier.size(24.dp))
+                IconButton(onClick = {
+                    try { onNextMonth() }
+                    catch (e: Throwable) {
+                        Toast.makeText(context, "切月失败:${e.javaClass.simpleName}:${e.message}", Toast.LENGTH_LONG).show()
+                    }
+                }, modifier = Modifier.size(36.dp)) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "下月", modifier = Modifier.size(24.dp))
                 }
             }
 

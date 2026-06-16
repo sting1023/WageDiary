@@ -2,6 +2,7 @@ package com.sting.wagediary
 
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -11,10 +12,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sting.wagediary.ui.HomeScreen
 import com.sting.wagediary.ui.SettingsScreen
 import com.sting.wagediary.ui.WageTheme
+import java.io.File
 
 /** App 入口(极简:ComponentActivity + AppRoot) */
 class MainActivity : ComponentActivity() {
@@ -22,16 +25,54 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // 全局异常防御:避免 Compose/Icon 抛 IllegalStateException 时把 Activity 整个 finish
+        // 全局异常防御 + 持久化到文件
         val prevHandler = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
-            Log.e("WageDiary", "未捕获异常 thread=${thread.name}", throwable)
-            // 调用上一个 handler(保留系统默认行为)
+            try {
+                val msg = "未捕获异常 thread=${thread.name}\n${android.util.Log.getStackTraceString(throwable)}"
+                Log.e("WageDiary", msg)
+                val crashFile = File(filesDir, "last_crash.log")
+                crashFile.writeText(msg)
+                Toast.makeText(applicationContext, "崩了:${throwable.javaClass.simpleName}:${throwable.message}", Toast.LENGTH_LONG).show()
+            } catch (_: Throwable) {}
             prevHandler?.uncaughtException(thread, throwable)
         }
 
+        // 启动时检查上次崩溃日志(由上一轮 uncaughtException 写入)
+        val crashFile = File(filesDir, "last_crash.log")
+        val initialCrash = if (crashFile.exists()) {
+            try {
+                crashFile.readText().also { crashFile.delete() }
+            } catch (_: Throwable) { null }
+        } else null
+
         setContent {
             WageTheme {
+                var crashShown by remember { mutableStateOf(initialCrash) }
+                if (crashShown != null) {
+                    androidx.compose.material3.AlertDialog(
+                        onDismissRequest = { crashShown = null },
+                        title = { androidx.compose.material3.Text("⚠️ 上次崩溃记录") },
+                        text = {
+                            androidx.compose.foundation.layout.Column(
+                                modifier = androidx.compose.ui.Modifier.verticalScroll(
+                                    androidx.compose.foundation.rememberScrollState()
+                                )
+                            ) {
+                                androidx.compose.material3.Text(
+                                    crashShown!!,
+                                    fontSize = 11.sp,
+                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                                )
+                            }
+                        },
+                        confirmButton = {
+                            androidx.compose.material3.TextButton(onClick = { crashShown = null }) {
+                                androidx.compose.material3.Text("确定(关闭)")
+                            }
+                        }
+                    )
+                }
                 AppRoot()
             }
         }
