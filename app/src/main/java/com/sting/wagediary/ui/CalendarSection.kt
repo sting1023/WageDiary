@@ -130,7 +130,7 @@ fun CalendarSection(
                                 } else ""
 
                                 CalendarDayCell(
-                                    day = dayNum,
+                                    date = date,
                                     isSelected = isSelected,
                                     hasEntry = hasEntry,
                                     isDirty = isDirty,
@@ -148,7 +148,7 @@ fun CalendarSection(
 
 @Composable
 private fun CalendarDayCell(
-    day: Int,
+    date: LocalDate,
     isSelected: Boolean,
     hasEntry: Boolean,
     isDirty: Boolean,
@@ -156,9 +156,9 @@ private fun CalendarDayCell(
     onClick: () -> Unit
 ) {
     val today = LocalDate.now()
-    val isToday = today.dayOfMonth == day && today.month == today.month && today.year == today.year
-    val dateForWeekend = today.withDayOfMonth(day)
-    val isWeekend = dateForWeekend.dayOfWeek.value == 6 || dateForWeekend.dayOfWeek.value == 7
+    val isToday = date == today
+    val dow = date.dayOfWeek.value
+    val isWeekend = dow == 6 || dow == 7
 
     val bgColor = when {
         isSelected -> WageColors.SelectedBg
@@ -185,7 +185,7 @@ private fun CalendarDayCell(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    day.toString(),
+                    date.dayOfMonth.toString(),
                     color = textColor,
                     fontSize = 12.sp,
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
