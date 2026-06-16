@@ -211,7 +211,14 @@ fun HomeScreen(
                                         RecentInputs.addDayNote(context, d.noteText)
                                     }
                                 },
-                                onClear = onClearEntry
+                                onClear = { clearedDate ->
+                                    // 同时清空 UI 草稿 + 持久化数据,否则页面字段残留
+                                    val emptyDraft = WageDraft.empty(clearedDate, state.settings)
+                                    draftsByDate = draftsByDate + (clearedDate to emptyDraft)
+                                    onClearEntry(clearedDate)
+                                    onMarkDirty(clearedDate)
+                                    onMarkManyClean(setOf(clearedDate))
+                                }
                             )
                         }
                     }
